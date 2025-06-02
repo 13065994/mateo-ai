@@ -872,7 +872,7 @@ app.get('/logout', (req, res) => {
 
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/neon-gpt';
+const MONGO_URI = process.env.MONGO_URI | 'mongodb+srv://mateochatbot:xdtL2bYQ9eV3CeXM@gerald.r2hjy.mongodb.net/mateo-apis?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
