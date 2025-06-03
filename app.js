@@ -18,7 +18,7 @@ app.use(session({
 }));
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/neongpt', {
+mongoose.connect('mongodb+srv://mateochatbot:xdtL2bYQ9eV3CeXM@gerald.r2hjy.mongodb.net/MateoBot?retryWrites=true&w=majority&appName=Cluster0', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => {
