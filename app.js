@@ -266,7 +266,7 @@ app.post('/register', async (req, res) => {
     if (!username || !email || !password) {
       return res.send('All fields are required. <a href="/register">Go back</a>');
     }
-    const existing = await User.findOne({ username });
+    const existing = await User.findOne({ username, email });
     if (existing) {
       return res.send('Username already taken. <a href="/register">Go back</a>');
     }
@@ -779,27 +779,39 @@ app.post('/profile', requireLogin, async (req, res) => {
 });
 
 // Example / endpoint (simplified)
-app.post('/gpt', async (req, res) => {
+const OPENAI_API_KEY = 'your_openai_api_key';
+const sysPrompt = user.systemPrompt || "Your are Neon Ai made to generate compatible response and friendly interface and your owner is Gerald Max.";
+
+app.post('/generate', async (req, res) => {
+  const { prompt } = req.body;
+  const apiKey = req.headers['x-api-key'];
+  const u = await User.findOne({ apiKey });
+  if (!apiKey.includes(u)) return res.send(alert("invalid apikey"));
+  if (!prompt) return res.send('no prompt is provided');
   try {
-    const apiKey = req.headers['x-api-key'];
-    if (!apiKey) {
-      return res.status(401).json({ error: 'Missing API key' });
-    }
-    const user = await User.findOne({ apiKey });
-    if (!user) {
-      return res.status(403).json({ error: 'Invalid API key' });
-    }
-    const prompt = req.headers['prompt'];
-    if (!prompt) {
-      return res.status(400).json({ error: 'Missing prompt' });
-    }
-    // Here you would integrate your AI generation logic.
-    // For demo, just echo prompt with systemPrompt.
-    const responseText = `System prompt: ${user.systemPrompt}\nUser prompt: ${prompt}\nResponse: [AI generated text here]`;
-    res.json({ result: responseText });
-  } catch (err) {
-    console.error('Generate error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: sysPrompt },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 2048,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+      }
+    );
+
+    const generatedText = response.data.choices[0].message.content;
+    res.json({ generatedText });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to generate text' });
   }
 });
 
