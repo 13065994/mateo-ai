@@ -429,214 +429,408 @@ app.get('/', requireLogin, async (req, res) => {
     ];
 
     res.send(`
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Neon GPT API - Dashboard</title>
-        <style>
-          body {
-            background: #121212;
-            color: #0ff;
-            font-family: monospace, monospace;
-            margin: 0;
-            padding: 1rem;
-            padding-top: 60px; /* nav height + spacing */
-          }
-          .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #001f33;
-            border-radius: 12px;
-            padding: 1rem 2rem;
-            box-shadow: 0 0 15px #0ff inset;
-          }
-          h1 {
-            text-align: center;
-            margin-bottom: 1rem;
-            text-shadow:
-              0 0 5px #0ff,
-              0 0 10px #0ff,
-              0 0 20px #0ff;
-          }
-          .api-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            justify-content: center;
-            margin-bottom: 2rem;
-          }
-          .api-button {
-            background: #002b55;
-            border: 2px solid #0ff;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            cursor: pointer;
-            font-weight: 700;
-            color: #0ff;
-            box-shadow:
-              0 0 10px #0ff,
-              0 0 20px #0ff inset;
-            transition: background 0.3s, box-shadow 0.3s;
-            user-select: none;
-            min-width: 140px;
-            text-align: center;
-          }
-          .api-button:hover, .api-button:focus {
-            background: #00e6e6;
-            color: #000;
-            outline: none;
-            box-shadow:
-              0 0 20px #00e6e6,
-              0 0 30px #00e6e6 inset;
-          }
-          .api-info {
-            background: #002b55;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 0 15px #0ff inset;
-            max-width: 700px;
-            margin: 0 auto;
-            font-size: 1rem;
-            line-height: 1.4;
-            user-select: text;
-          }
-          .api-info h2 {
-            margin-top: 0;
-            text-shadow:
-              0 0 5px #0ff,
-              0 0 10px #0ff;
-          }
-          .api-info p {
-            margin: 0.5rem 0;
-          }
-          .copy-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin: 0.5rem 0;
-          }
-          .copy-text {
-            background: #001f33;
-            padding: 0.3rem 0.6rem;
-            border-radius: 6px;
-            font-family: monospace;
-            user-select: all;
-            flex-grow: 1;
-            overflow-wrap: anywhere;
-          }
-          .copy-button {
-            background: #0ff;
-            border: none;
-            border-radius: 8px;
-            padding: 0.3rem 0.6rem;
-            font-weight: 700;
-            cursor: pointer;
-            color: #000;
-            box-shadow: 0 0 10px #0ff;
-            transition: background 0.3s;
-          }
-          .copy-button:hover, .copy-button:focus {
-            background: #00e6e6;
-            outline: none;
-          }
-        </style>
-      </head>
-      <body>
-        ${renderNav(user.username)}
-        <div class="container">
-          <h1>Neon GPT API Dashboard</h1>
-          <div class="api-buttons" role="list">
-            ${apis.map((api, i) => `<button class="api-button" role="listitem" data-index="${i}" aria-expanded="false" aria-controls="api-info">${api.name}</button>`).join('')}
-          </div>
-          <div id="api-info" class="api-info" aria-live="polite" aria-hidden="true"></div>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neon GPT API - Dashboard</title>
+    <style>
+      body {
+        background: #121212;
+        color: #0ff;
+        font-family: monospace, monospace;
+        margin: 0;
+        padding: 1rem;
+        padding-top: 60px; /* nav height + spacing */
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #001f33;
+        border-radius: 12px;
+        padding: 1rem 2rem;
+        box-shadow: 0 0 15px #0ff inset;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1rem;
+        text-shadow:
+          0 0 5px #0ff,
+          0 0 10px #0ff,
+          0 0 20px #0ff;
+      }
+      .api-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+      }
+      .api-button {
+        background: #002b55;
+        border: 2px solid #0ff;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        cursor: pointer;
+        font-weight: 700;
+        color: #0ff;
+        box-shadow:
+          0 0 10px #0ff,
+          0 0 20px #0ff inset;
+        transition: background 0.3s, box-shadow 0.3s;
+        user-select: none;
+        min-width: 140px;
+        text-align: center;
+      }
+      .api-button:hover, .api-button:focus {
+        background: #00e6e6;
+        color: #000;
+        outline: none;
+        box-shadow:
+          0 0 20px #00e6e6,
+          0 0 30px #00e6e6 inset;
+      }
+      .api-info {
+        background: #002b55;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 0 15px #0ff inset;
+        max-width: 700px;
+        margin: 0 auto 2rem auto;
+        font-size: 1rem;
+        line-height: 1.4;
+        user-select: text;
+      }
+      .api-info h2 {
+        margin-top: 0;
+        text-shadow:
+          0 0 5px #0ff,
+          0 0 10px #0ff;
+      }
+      .api-info p {
+        margin: 0.5rem 0;
+      }
+      .copy-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+      }
+      .copy-text {
+        background: #001f33;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-family: monospace;
+        user-select: all;
+        flex-grow: 1;
+        overflow-wrap: anywhere;
+      }
+      .copy-button {
+        background: #0ff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.3rem 0.6rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #000;
+        box-shadow: 0 0 10px #0ff;
+        transition: background 0.3s;
+      }
+      .copy-button:hover, .copy-button:focus {
+        background: #00e6e6;
+        outline: none;
+      }
+      /* News section */
+      .news-section {
+        background: #001f33;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 0 15px #0ff inset;
+        max-width: 700px;
+        margin: 0 auto 2rem auto;
+      }
+      .news-section h2 {
+        margin-top: 0;
+        text-shadow:
+          0 0 5px #0ff,
+          0 0 10px #0ff;
+        margin-bottom: 1rem;
+      }
+      .news-item {
+        border-bottom: 1px solid #004080;
+        padding: 0.5rem 0;
+      }
+      .news-item:last-child {
+        border-bottom: none;
+      }
+      .news-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+      }
+      .news-date {
+        font-size: 0.8rem;
+        color: #00e6e6;
+        margin-bottom: 0.3rem;
+      }
+      .news-content {
+        font-size: 0.95rem;
+        line-height: 1.3;
+      }
+      /* News form */
+      .news-form {
+        background: #002b55;
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 0 15px #0ff inset;
+        max-width: 700px;
+        margin: 0 auto 2rem auto;
+        color: #0ff;
+      }
+      .news-form h3 {
+        margin-top: 0;
+        text-shadow:
+          0 0 5px #0ff,
+          0 0 10px #0ff;
+        margin-bottom: 1rem;
+      }
+      .news-form label {
+        display: block;
+        margin-bottom: 0.3rem;
+        font-weight: 700;
+      }
+      .news-form input[type="text"],
+      .news-form textarea {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border: none;
+        font-family: monospace;
+        font-size: 1rem;
+        background: #001f33;
+        color: #0ff;
+        box-shadow: inset 0 0 5px #0ff;
+        resize: vertical;
+      }
+      .news-form button {
+        background: #0ff;
+        border: none;
+        border-radius: 12px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #000;
+        box-shadow: 0 0 15px #0ff;
+        transition: background 0.3s;
+      }
+      .news-form button:hover, .news-form button:focus {
+        background: #00e6e6;
+        outline: none;
+      }
+      .form-message {
+        margin-top: 0.5rem;
+        font-weight: 700;
+      }
+      .form-message.success {
+        color: #0f0;
+      }
+      .form-message.error {
+        color: #f00;
+      }
+    </style>
+  </head>
+  <body>
+    ${renderNav(user.username)}
+    <div class="container">
+      <h1>Neon GPT API Dashboard</h1>
+      <div class="api-buttons" role="list">
+        ${apis.map((api, i) => `<button class="api-button" role="listitem" data-index="${i}" aria-expanded="false" aria-controls="api-info">${api.name}</button>`).join('')}
+      </div>
+      <div id="api-info" class="api-info" aria-live="polite" aria-hidden="true"></div>
+
+      <section class="news-section" aria-label="News Updates">
+        <h2>News Updates</h2>
+        <div id="news-container" aria-live="polite" aria-atomic="true">
+          <p>Loading news...</p>
         </div>
-        <script>
-          const apis = ${JSON.stringify(apis)};
-          const userApiKey = ${JSON.stringify(user.apiKey)};
-          const baseUrl = window.location.origin;
+      </section>
 
-          const buttons = document.querySelectorAll('.api-button');
-          const infoDiv = document.getElementById('api-info');
+      ${user.email === 'g13065994@gmail.com' ? `
+      <section class="news-form" aria-label="Submit News Update">
+        <h3>Submit News Update</h3>
+        <form id="news-form">
+          <label for="news-title">Title</label>
+          <input type="text" id="news-title" name="title" required maxlength="100" />
+          <label for="news-date">Date</label>
+          <input type="text" id="news-date" name="date" required maxlength="50" placeholder="e.g. June 4, 2025" />
+          <label for="news-content">Content</label>
+          <textarea id="news-content" name="content" rows="4" required maxlength="500"></textarea>
+          <button type="submit">Add News</button>
+          <div id="form-message" class="form-message" role="alert" aria-live="assertive"></div>
+        </form>
+      </section>
+      ` : ''}
 
-          function createCopyButton(textToCopy) {
-            const btn = document.createElement('button');
-            btn.className = 'copy-button';
-            btn.type = 'button';
-            btn.textContent = 'Copy';
-            btn.addEventListener('click', () => {
-              navigator.clipboard.writeText(textToCopy).then(() => {
-                btn.textContent = 'Copied!';
-                setTimeout(() => btn.textContent = 'Copy', 1500);
-              });
-            });
-            return btn;
+    </div>
+    <script>
+      const apis = ${JSON.stringify(apis)};
+      const userApiKey = ${JSON.stringify(user.apiKey)};
+      const baseUrl = window.locationorigin;
+
+      const buttons = document.querySelectorAll('.api-button');
+      const infoDiv = document.getElementById('api-info');
+      const newsContainer = document.getElementById('news-container');
+      const userEmail = ${JSON.stringify(user.email)};
+
+      function createCopyButton(textToCopy) {
+        const btn = document.createElement('button');
+        btn.className = 'copy-button';
+        btn.type = 'button';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 1500);
+          });
+        });
+        return btn;
+      }
+
+      buttons.forEach(button => {
+        button.addEventListener('click', () => {
+          const index = button.getAttribute('data-index');
+          const api = apis[index];
+
+          // Toggle aria-expanded
+          const expanded = button.getAttribute('aria-expanded') === 'true';
+          buttons.forEach(b => b.setAttribute('aria-expanded', 'false'));
+          if (!expanded) {
+            button.setAttribute('aria-expanded', 'true');
+          } else {
+            button.setAttribute('aria-expanded', 'false');
+            infoDiv.innerHTML = '';
+            infoDiv.setAttribute('aria-hidden', 'true');
+            return;
           }
 
-          buttons.forEach(button => {
-            button.addEventListener('click', () => {
-              const index = button.getAttribute('data-index');
-              const api = apis[index];
+          // Build info content
+          infoDiv.innerHTML = '';
+          infoDiv.setAttribute('aria-hidden', 'false');
 
-              // Toggle aria-expanded
-              const expanded = button.getAttribute('aria-expanded') === 'true';
-              buttons.forEach(b => b.setAttribute('aria-expanded', 'false'));
-              if (!expanded) {
-                button.setAttribute('aria-expanded', 'true');
-              } else {
-                button.setAttribute('aria-expanded', 'false');
-                infoDiv.innerHTML = '';
-                infoDiv.setAttribute('aria-hidden', 'true');
-                return;
-              }
+          const title = document.createElement('h2');
+          title.textContent = api.name;
+          infoDiv.appendChild(title);
 
-              // Build info content
-              infoDiv.innerHTML = '';
-              infoDiv.setAttribute('aria-hidden', 'false');
+          const desc = document.createElement('p');
+          desc.textContent = api.description;
+          infoDiv.appendChild(desc);
 
-              const title = document.createElement('h2');
-              title.textContent = api.name;
-              infoDiv.appendChild(title);
+          const method = document.createElement('p');
+          method.innerHTML = '<strong>Method:</strong> ' + api.type;
+          infoDiv.appendChild(method);
 
-              const desc = document.createElement('p');
-              desc.textContent = api.description;
-              infoDiv.appendChild(desc);
+          const linkGroup = document.createElement('div');
+          linkGroup.className = 'copy-group';
+          const linkLabel = document.createElement('span');
+          linkLabel.textContent = 'Endpoint:';
+          const linkText = document.createElement('code');
+          linkText.className = 'copy-text';
+          linkText.textContent = baseUrl + api.link;
+          const linkCopyBtn = createCopyButton(baseUrl + api.link);
+          linkGroup.appendChild(linkLabel);
+          linkGroup.appendChild(linkText);
+          linkGroup.appendChild(linkCopyBtn);
+          infoDiv.appendChild(linkGroup);
 
-              const method = document.createElement('p');
-              method.innerHTML = '<strong>Method:</strong> ' + api.type;
-              infoDiv.appendChild(method);
+          const keyGroup = document.createElement('div');
+          keyGroup.className = 'copy-group';
+          const keyLabel = document.createElement('span');
+          keyLabel.textContent = 'API Key:';
+          const keyText = document.createElement('code');
+          keyText.className = 'copy-text';
+          keyText.textContent = userApiKey;
+          const keyCopyBtn = createCopyButton(userApiKey);
+          keyGroup.appendChild(keyLabel);
+          keyGroup.appendChild(keyText);
+          keyGroup.appendChild(keyCopyBtn);
+          infoDiv.appendChild(keyGroup);
+        });
+      });
 
-              const linkGroup = document.createElement('div');
-              linkGroup.className = 'copy-group';
-              const linkLabel = document.createElement('span');
-              linkLabel.textContent = 'Endpoint:';
-              const linkText = document.createElement('code');
-              linkText.className = 'copy-text';
-              linkText.textContent = baseUrl + api.link;
-              const linkCopyBtn = createCopyButton(linkText.textContent);
-              linkGroup.appendChild(linkLabel);
-              linkGroup.appendChild(linkText);
-              linkGroup.appendChild(linkCopyBtn);
-              infoDiv.appendChild(linkGroup);
+      // Fetch and render news updates
+      function renderNews(news) {
+        if (!news.length) {
+          newsContainer.innerHTML = '<p>No news updates available.</p>';
+          return;
+        }
+        newsContainer.innerHTML = '';
+        news.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'news-item';
+          div.innerHTML = \`
+            <div class="news-title">\${item.title}</div>
+            <div class="news-date">\${item.date}</div>
+            <div class="news-content">\${item.content}</div>
+          \`;
+          newsContainer.appendChild(div);
+        });
+      }
 
-              const keyGroup = document.createElement('div');
-              keyGroup.className = 'copy-group';
-              const keyLabel = document.createElement('span');
-              keyLabel.textContent = 'Your API Key:';
-              const keyText = document.createElement('code');
-              keyText.className = 'copy-text';
-              keyText.textContent = userApiKey;
-              const keyCopyBtn = createCopyButton(userApiKey);
-              keyGroup.appendChild(keyLabel);
-              keyGroup.appendChild(keyText);
-              keyGroup.appendChild(keyCopyBtn);
-              infoDiv.appendChild(keyGroup);
-            });
+      function fetchNews() {
+        fetch(baseUrl + '/news')
+          .then(res => res.json())
+          .then(data => renderNews(data))
+          .catch(() => {
+            newsContainer.innerHTML = '<p>Error loading news updates.</p>';
           });
-        </script>
-      </body>
-      </html>
-    `);
+      }
+
+      fetchNews();
+
+      // News submission form handling (only if form exists)
+      const newsForm = document.getElementById('news-form');
+      if (newsForm) {
+        const formMessage = document.getElementById('form-message');
+        newsForm.addEventListener('submit', e => {
+          e.preventDefault();
+          formMessage.textContent = '';
+          formMessage.className = 'form-message';
+
+          const title = newsForm.title.value.trim();
+          const date = newsForm.date.value.trim();
+          const content = newsForm.content.value.trim();
+
+          if (!title || !date || !content) {
+            formMessage.textContent = 'Please fill in all fields.';
+            formMessage.classList.add('error');
+            return;
+          }
+
+          fetch(baseUrl + '/news', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, date, content })
+          })
+          .then(res => {
+            if (!res.ok) return res.json().then(err => Promise.reject(err));
+            return res.json();
+          })
+          .then(data => {
+            formMessage.textContent = 'News update added successfully.';
+            formMessage.classList.add('success');
+            newsForm.reset();
+            renderNews(data.news);
+          })
+          .catch(err => {
+            formMessage.textContent = err.error || 'Failed to add news update.';
+            formMessage.classList.add('error');
+          });
+        });
+      }
+    </script>
+  </body>
+  </html>
+`);
   } catch (err) {
     console.error('Dashboard error:', err);
     res.send('Error loading dashboard. <a href="/login">Login</a>');
