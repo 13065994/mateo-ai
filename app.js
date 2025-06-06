@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const axios = require('axios'); // Added missing import
 
 const app = express();
 app.use(bodyParser.json());
@@ -266,19 +267,19 @@ app.post('/register', async (req, res) => {
     if (!username || !email || !password) {
       return res.send('All fields are required. <a href="/register">Go back</a>');
     }
-    const existing = await User.findOne({ username, email });
+    // Fixed: check if username OR email already exists
+    const existing = await User.findOne({ $or: [{ username },{ email }] });
     if (existing) {
-      return res.send('Username already taken. <a href="/register">Go back</a>');
+      return res.send('Username or email already taken. <a href="/register">Go back</a>');
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const apiKey = generateApiKey();
-    const user = new User({ username, email, passwordHash, apiKey, systemPrompt: "You are a helpful assistant." });
+    const user = new User({ username, email, passwordHash, apiKey });
     await user.save();
     req.session.userId = user._id;
-    console.log(`User registered: ${username}`);
     res.redirect('/');
   } catch (err) {
-    console.error('Registration error:', err);
+    console.error(err);
     res.send('Error during registration. <a href="/register">Try again</a>');
   }
 });
@@ -370,17 +371,16 @@ app.post('/login', async (req, res) => {
     }
     const user = await User.findOne({ username });
     if (!user) {
-      return res.send('Invalid username or password. <a href="/login">Go back</a>');
+      return res.send('Invalid username or password. <a href="/login">Try again</a>');
     }
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
-      return res.send('Invalid username or password. <a href="/login">Go back</a>');
+      return res.send('Invalid username or password. <a href="/login">Try again</a>');
     }
     req.session.userId = user._id;
-    console.log(`User logged in: ${username}`);
     res.redirect('/');
   } catch (err) {
-    console.error('Login error:', err);
+    console.error(err);
     res.send('Error during login. <a href="/login">Try again</a>');
   }
 });
@@ -392,7 +392,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Dashboard - list APIs as buttons with dynamic info display
+// Dashboard
 app.get('/', requireLogin, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
@@ -400,7 +400,6 @@ app.get('/', requireLogin, async (req, res) => {
       return res.redirect('/login');
     }
 
-    // Define your APIs info here
     const apis = [
       {
         name: 'Health Check',
@@ -427,9 +426,8 @@ app.get('/', requireLogin, async (req, res) => {
         description: 'Update your email, bio, and system prompt.',
       },
     ];
-
-    res.send(`
-  <html lang="en">
+      res.send(`
+    <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -832,185 +830,63 @@ app.get('/', requireLogin, async (req, res) => {
   </html>
 `);
   } catch (err) {
-    console.error('Dashboard error:', err);
-    res.send('Error loading dashboard. <a href="/login">Login</a>');
+    console.error(err);
+    res.redirect('/');
   }
 });
 
-// Profile page GET
-app.get('/profile', requireLogin, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-    if (!user) {
-      return res.redirect('/login');
-    }
-    res.send(`
-    <html lang="en">
-    <head>
-      <title>Edit Profile - Neon GPT API</title>
-      <style>
-        body {
-          background: #121212;
-          color: #0ff;
-          font-family: monospace, monospace;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          margin: 0;
-          padding-top: 50px;
-        }
-        form {
-          background: #001f33;
-          padding: 2rem;
-          border-radius: 12px;
-          box-shadow: 0 0 15px #0ff inset;
-          width: 400px;
-        }
-        label {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 700;
-        }
-        input, textarea {
-          width: 100%;
-          padding: 0.5rem;
-          margin-bottom: 1rem;
-          border-radius: 8px;
-          border: none;
-          background: #002b55;
-          color: #0ff;
-          font-family: monospace;
-          resize: vertical;
-        }
-        button {
-          width: 100%;
-          padding: 0.75rem;
-          background: #0ff;
-          border: none;
-          border-radius: 12px;
-          font-weight: 700;
-          cursor: pointer;
-          color: #000;
-          box-shadow: 0 0 15px #0ff;
-        }
-        button:hover {
-          background: #00e6e6;
-        }
-        a {
-          color: #0ff;
-          text-decoration: none;
-          font-size: 0.9rem;
-          display: block;
-          margin-top: 1rem;
-          text-align: center;
-        }
-        .api-key {
-          background: #001f33;
-          padding: 0.5rem;
-          border-radius: 8px;
-          font-family: monospace;
-          user-select: all;
-          margin-bottom: 1rem;
-          box-shadow: 0 0 10px #0ff inset;
-        }
-      </style>
-    </head>
-    <body>
-      ${renderNav(user.username)}
-      <form method="POST" action="/profile">
-        <h2 style="text-align:center;">Edit Profile</h2>
-        <label>Username (read-only)</label>
-        <input type="text" value="${user.username}" readonly />
-        <label>Email</label>
-        <input name="email" type="email" value="${user.email || ''}" required />
-        <label>Bio</label>
-        <textarea name="bio" rows="3">${user.bio || ''}</textarea>
-        <label>System Prompt</label>
-        <textarea name="systemPrompt" rows="4">${user.systemPrompt || ''}</textarea>
-        <label>Your API Key (read-only)</label>
-        <div class="api-key" id="apiKey">${user.apiKey}</div>
-        <button type="submit">Update Profile</button>
-        <a href="/">Back to Dashboard</a>
-      </form>
-      <script>
-        // Optional: click API key to copy
-        const apiKeyDiv = document.getElementById('apiKey');
-        apiKeyDiv.style.cursor = 'pointer';
-        apiKeyDiv.title = 'Click to copy API key';
-        apiKeyDiv.addEventListener('click', () => {
-          navigator.clipboard.writeText(apiKeyDiv.textContent).then(() => {
-            apiKeyDiv.textContent = 'Copied!';
-            setTimeout(() => {
-              apiKeyDiv.textContent = '${user.apiKey}';
-            }, 1500);
-          });
-        });
-      </script>
-    </body>
-    </html>
-    `);
-  } catch (err) {
-    console.error('Profile GET error:', err);
-    res.send('Error loading profile. <a href="/">Dashboard</a>');
-  }
-});
-
-// Profile page POST - update email, bio, systemPrompt
+// Edit profile POST
 app.post('/profile', requireLogin, async (req, res) => {
   try {
-    const { email, bio, systemPrompt } = req.body;
-    await User.findByIdAndUpdate(req.session.userId, {
-      email,
-      bio,
-      systemPrompt,
-    });
-    res.redirect('/profile');
+    const { bio, systemPrompt } = req.body;
+    await User.findByIdAndUpdate(req.session.userId, { bio, systemPrompt });
+    res.redirect('/');
   } catch (err) {
-    console.error('Profile POST error:', err);
+    console.error(err);
     res.send('Error updating profile. <a href="/profile">Go back</a>');
   }
 });
 
-// Example / endpoint (simplified)
-const OPENAI_API_KEY = 'your_openai_api_key';
-const sysPrompt = user.systemPrompt || "Your are Neon Ai made to generate compatible response and friendly interface and your owner is Gerald Max.";
-
+// Generate response API
 app.post('/generate', async (req, res) => {
-  const { prompt } = req.body;
-  const apiKey = req.headers['x-api-key'];
-  const u = await User.findOne({ apiKey });
-  if (!apiKey.includes(u)) return res.send(alert("invalid apikey"));
-  if (!prompt) return res.send('no prompt is provided');
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: sysPrompt },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 2048,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-      }
-    );
+    const { apiKey, prompt } = req.body;
+    // Fixed: find user by apiKey
+    const user = await User.findOne({ apiKey });
+    if (!user) {
+      return res.status(401).send('Invalid API key');
+    }
+    if (!prompt) {
+      return res.status(400).send('No prompt is provided');
+    }
+    const sysPrompt = user.systemPrompt || "You are Neon AI made to generate compatible responses with a friendly interface. Your owner is Gerald Max.";
 
-    const generatedText = response.data.choices[0].message.content;
-    res.json({ generatedText });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to generate text' });
+    // Call OpenAI API (example with axios)
+    const openaiResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: sysPrompt },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    }, {
+      headers: {
+        'Authorization': `Bearer YOUR_OPENAI_API_KEY`,
+        'Content-Type': 'application/json',
+      }
+    });
+
+    const generatedText = openaiResponse.data.choices[0].message.content;
+    res.json({ response: generatedText });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error generating response');
   }
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Neon GPT API server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
